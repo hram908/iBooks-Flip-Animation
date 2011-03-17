@@ -70,8 +70,9 @@
 		return CATransform3DIdentity;
 	}
 	
-	return CATransform3DMakeRotation((M_PI/180)*degrees, 0.0f, 1.0f, 0.0);
-	
+	CATransform3D transform = CATransform3DMakeRotation((M_PI/180)*degrees, 0.0f, 1.0f, 0.0f);
+	transform.m34 = 0.001;
+	return transform;
 }
 
 - (UIImage*)contentsForView:(UIView*)aView{
@@ -104,33 +105,34 @@
 	
 	CATransformLayer *transformLayer = [CATransformLayer layer];
 	transformLayer.frame = contentsLayer.bounds;
+	transformLayer.sublayerTransform = CATransform3DMakeTranslation(0.0f, 0.0f, -(contentsLayer.frame.size.width/2));
 	[contentsLayer addSublayer:transformLayer];
 	
 	CALayer *backLayer = [CALayer layer];
 	backLayer.contents = (id)image.CGImage;
 	backLayer.doubleSided = NO;
 	backLayer.frame = transformLayer.bounds;
-	backLayer.zPosition = 0.0f;
+	backLayer.zPosition = -(FLIP_GAP/2);
 	backLayer.transform = [self transformWithDegrees:180.0f];
 	[transformLayer addSublayer:backLayer];
 	
 	CALayer *frontLayer = [CALayer layer];
 	frontLayer.contents = (id)[self contentsForView:fromController.view].CGImage;
 	frontLayer.doubleSided = NO;
-	frontLayer.zPosition = FLIP_GAP;
+	frontLayer.zPosition = (FLIP_GAP/2);
 	frontLayer.frame = transformLayer.bounds;
 	frontLayer.masksToBounds = NO;
 	[transformLayer addSublayer:frontLayer];
 	
 	CALayer *sideLayer = [CALayer layer];
 	sideLayer.contents = (id)[UIImage imageNamed:@"Wood Tile.png"].CGImage;
-	sideLayer.zPosition = FLIP_GAP/2;
+	sideLayer.zPosition = 0.0f;
 	sideLayer.frame = CGRectMake(transformLayer.bounds.origin.x-(FLIP_GAP/2), transformLayer.bounds.origin.y, FLIP_GAP, transformLayer.bounds.size.height);
 	sideLayer.transform = [self transformWithDegrees:90.0f];
 	[transformLayer addSublayer:sideLayer];
 	
 	CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"sublayerTransform"];
-	animation.toValue = [NSValue valueWithCATransform3D:[self transformWithDegrees:179.9f]];
+	animation.toValue = [NSValue valueWithCATransform3D:CATransform3DTranslate([self transformWithDegrees:179.9f], 0.0f, 0.0f, (FLIP_GAP/2))];
 	animation.duration = ANIMATION_DURATION;
 	animation.fillMode = kCAFillModeForwards;
 	animation.removedOnCompletion = NO;
